@@ -1,0 +1,66 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CloudFormation Template for creating an RDS instance in a private subnet
+
+Parameters:
+  DBInstanceIdentifier:
+    Description: The name of the RDS instance
+    Type: String
+  DBMasterUsername:
+    Description: The master username for the RDS instance
+    Type: String
+  DBMasterPassword:
+    Description: The master password for the RDS instance
+    Type: String
+    NoEcho: true
+  VpcId:
+    Description: The ID of the VPC where the RDS instance will be created
+    Type: AWS::EC2::VPC::Id
+  SubnetId:
+    Description: The ID of the private subnet where the RDS instance will be placed
+    Type: AWS::EC2::Subnet::Id
+  DBInstanceClass:
+    Description: The RDS instance class
+    Type: String
+    Default: db.t2.micro
+  DBName:
+    Description: The name of the initial database
+    Type: String
+    Default: mydb
+
+Resources:
+  RDSSecurityGroup:
+    Type: AWS::RDS::DBSecurityGroup
+    Properties:
+      DBSecurityGroupIngress:
+        - EC2SecurityGroupName: !GetAtt PrivateSubnetSecurityGroup.GroupName
+
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Ref DBInstanceIdentifier
+      AllocatedStorage: 20
+      DBInstanceClass: !Ref DBInstanceClass
+      Engine: mysql  
+      EngineVersion: 5.7
+      MasterUsername: !Ref DBMasterUsername
+      MasterUserPassword: !Ref DBMasterPassword
+      VPCSecurityGroups:
+        - !GetAtt RDSSecurityGroup.GroupId
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      AvailabilityZone: !Select [0, !GetAZs !Ref 'AWS::Region']
+      MultiAZ: false
+      PubliclyAccessible: false
+      StorageType: gp2
+      DBName: !Ref DBName
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for RDS
+      SubnetIds:
+        - !Ref SubnetId
+
+Outputs:
+  RDSInstanceId:
+    Description: RDS instance ID
+    Value: !Ref RDSInstance

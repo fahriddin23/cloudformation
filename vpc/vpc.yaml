@@ -1,0 +1,147 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "VPC CloudFormation task" 
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: '10.0.0.0/23'
+      EnableDnsHostnames: 'true'
+      EnableDnsSupport: 'true'
+      Tags:
+        - Key: Env
+          Value: "Hw"
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Env
+          Value: "Hw"
+  
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: 
+        Ref: InternetGateway
+      VpcId: 
+        Ref: VPC
+
+  PubSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: 
+        Ref: VPC
+      CidrBlock: 10.0.0.0/25
+      AvailabilityZone: "us-east-1a"
+      Tags:
+        - Key: Name
+          Value: "public-subnet-1"
+        - Key: Env
+          Value: "Hw"
+
+  PubSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: 
+        Ref: VPC
+      CidrBlock: 10.0.0.128/25
+      AvailabilityZone: "us-east-1b"
+      Tags:
+        - Key: Name
+          Value: "public-subnet-2"
+        - Key: Env
+          Value: "Hw"
+  
+  PrivSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: 
+        Ref: VPC
+      CidrBlock: 10.0.1.0/25
+      AvailabilityZone: "us-east-1c"
+      Tags:
+        - Key: Name
+          Value: "private-subnet-1"
+        - Key: Env
+          Value: "Hw"
+  
+  PrivSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: 
+        Ref: VPC
+      CidrBlock: 10.0.1.128/25
+      AvailabilityZone: "us-east-1d"
+      Tags:
+        - Key: Name
+          Value: "private-subnet-2"
+        - Key: Env
+          Value: "Hw"
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: 
+        Ref: VPC
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: 
+        Ref: PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: 
+        Ref: InternetGateway
+
+  PubSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: 
+        Ref: PublicRouteTable
+      SubnetId:
+        Ref: PubSubnet1
+
+  PubSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: 
+        Ref: PublicRouteTable
+      SubnetId: 
+        Ref: PubSubnet2
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: 
+        Ref: VPC
+
+  PrivSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId:
+        Ref: PrivateRouteTable
+      SubnetId: 
+        Ref: PrivSubnet1
+
+  PrivSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: 
+        Ref: PrivateRouteTable
+      SubnetId: 
+        Ref: PrivSubnet2
+
+Outputs:
+  VPCId:
+    Description: "VPC ID"
+    Value: !Ref "VPC"
+    Export:
+      Name: wp-vpc
+  PubSubnet1Id:
+    Description: "Public Subnet1 ID"
+    Value: !Ref "PubSubnet1"
+    Export:
+      Name: PubSubnet1
+
+    

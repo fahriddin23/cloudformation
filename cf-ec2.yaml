@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: CloudFormation Template for creating an EC2 instance with WordPress
+
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::lenovo
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+  VpcId:
+    Description: The ID of the VPC where the EC2 instance will be created
+    Type: AWS::EC2::VPC::Id
+  SubnetId:
+    Description: The ID of the public subnet where the EC2 instance will be placed
+    Type: AWS::EC2::Subnet::Id
+
+Resources:
+  WebServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable HTTP and SSH access
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          CidrIp: 0.0.0.0/0
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-12345678 # Replace with the appropriate Amazon Linux 2 AMI ID for 2023.
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: 'true'
+          DeviceIndex: '0'
+          SubnetId: !Ref SubnetId
+          GroupSet:
+            - !Ref WebServerSecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y httpd24 php72 php72-mysqlnd
+          service httpd start
+          chkconfig httpd on
+          amazon-linux-extras install -y lamp-mariadb10.2-php7.2 php7.2
+          yum install -y wget
+          cd /var/www/html
+          wget https://wordpress.org/latest.tar.gz
+          tar -xzf latest.tar.gz
+          chown -R apache:apache wordpress
+          rm -rf latest.tar.gz
+          echo "<?php phpinfo(); ?>" > /var/www/html/phpinfo.php
+          systemctl restart httpd
+
+Outputs:
+  InstanceId:
+    Description: EC2 instance ID
+    Value: !Ref EC2Instance

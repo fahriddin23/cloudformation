@@ -1,0 +1,42 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "RDS Instance CloudFormation"
+
+Parameters:
+  VPCId:
+    Type: String
+    Description: "VPC ID"
+
+Resources:
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: RDS Security Group
+      VpcId: !Ref VPCId
+
+  RDSSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: RDS Subnet Group
+      SubnetIds:
+        - subnet-0d32f5704e6946a22
+        - subnet-0b1d4b5985a9e1819
+
+  RDSInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: 5 
+      DBInstanceIdentifier: MyRDSInstance
+      DBInstanceClass: db.t2.micro
+      Engine: mysql
+      MasterUsername: admin
+      MasterUserPassword: adminpassword
+      VPCSecurityGroups:
+        - !Ref RDSSecurityGroup
+      DBSubnetGroupName: !Ref RDSSubnetGroup
+      MultiAZ: false
+      PubliclyAccessible: false
+
+Outputs:
+  RDSInstanceEndpoint:
+    Description: "RDS Instance Endpoint"
+    Value: !GetAtt RDSInstance.Endpoint.Address

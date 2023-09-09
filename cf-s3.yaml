@@ -1,0 +1,9 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  MyTestBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: "freddy-aws-class-test-bucket-cf-1"
+      Tags:
+        - Key: "Managedby"
+          Value: "CloudFormation"
